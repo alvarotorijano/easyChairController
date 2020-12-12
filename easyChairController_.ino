@@ -1,7 +1,11 @@
-#include <SoftwareSerial.h>
 #include <stdint.h>
+#include "BluetoothSerial.h"
 
-#define BT_BAUDRATE 9600
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+BluetoothSerial SerialBT;
 
 #define TRIGGER_PIN 2
 #define LASER_PIN 3
@@ -10,7 +14,7 @@
 #define LEFT_BLINKER 6
 #define RIGHT_BLINKER 7
 
-#define LED LED_BUILTIN
+#define LED 26
 
 #define BLINK_PERIOD 2000
 
@@ -35,10 +39,11 @@ transmission_bt_t last_transmission;
 unsigned long trigger_open;
 
 void setup() {
-  Serial1.begin(BT_BAUDRATE, SERIAL_8O1);
-  //Serial1.begin(BT_BAUDRATE);
+  
   Serial.begin(9600);
+  SerialBT.begin("EasyChair");
   Serial.println("EasyChair started");
+  
   pinMode(BT_STATUS_PIN, INPUT);
 
   pinMode(BT_ENABLE_PIN, OUTPUT);
@@ -48,7 +53,7 @@ void setup() {
   digitalWrite(TRIGGER_PIN, LOW);
   
   pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
+  digitalWrite(LED, !LOW);
 
   memset (&last_transmission, 0, sizeof(transmission_bt_t));
   trigger_open = millis();
@@ -59,28 +64,11 @@ void setup() {
 
 void loop() {
 
-//*/
-
-  if ( lastBT_status == false && digitalRead(BT_STATUS_PIN) == true){
-    delay(1000);
-  }
-
-  if ( lastBT_status == true && digitalRead(BT_STATUS_PIN) == false){
-    digitalWrite(BT_ENABLE_PIN, LOW);
-    delay(500);
-    digitalWrite(BT_ENABLE_PIN, HIGH);
-  }
-  
-  if ( lastBT_status != digitalRead(BT_STATUS_PIN)){
-    lastBT_status = digitalRead(BT_STATUS_PIN);
-  }
-  //*/
-
-  if (Serial1.available() == sizeof(transmission_bt_t)){
+  if (SerialBT.available() >= sizeof(transmission_bt_t)){
     Serial.println("mensaje recibido");
     transmission_bt_t temp;
     for (byte i = 0; i < sizeof(transmission_bt_t); i++){
-      ((byte *)(&temp))[i] = Serial1.read();
+      ((byte *)(&temp))[i] = SerialBT.read();
     }
     if (temp.initialization == 0xABCD){
       last_transmission = temp;
@@ -107,6 +95,6 @@ void loop() {
   digitalWrite(LEFT_BLINKER, !((last_transmission.left_blinker  |  last_transmission.emergency_blinker) && (millis() % BLINK_PERIOD > BLINK_PERIOD / 2)));
   digitalWrite(RIGHT_BLINKER,!((last_transmission.right_blinker |  last_transmission.emergency_blinker) && (millis() % BLINK_PERIOD > BLINK_PERIOD / 2)));
 
-  //Serial.println(last_transmission.left_blinker);
+  Serial.println(last_transmission.left_blinker);
 
 }
