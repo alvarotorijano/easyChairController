@@ -1,11 +1,14 @@
-#include <stdint.h>
+//This example code is in the Public Domain (or CC0 licensed, at your option.)
+//By Evandro Copercini - 2018
+//
+//This example creates a bridge between Serial and Classical Bluetooth (SPP)
+//and also demonstrate that SerialBT have the same functionalities of a normal Serial
+
 #include "BluetoothSerial.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
-
-BluetoothSerial SerialBT;
 
 #define TRIGGER_PIN 2
 #define LASER_PIN 3
@@ -14,6 +17,16 @@ BluetoothSerial SerialBT;
 #define LEFT_BLINKER 6
 #define RIGHT_BLINKER 7
 
+#define SINGLE_SHOT_MASK        0b00000001   // 1
+#define TRIPLE_SHOT_MASK        0b00000010   // 2
+#define AUTOMATIC_SHOT_MASK     0b00000100   // 4
+#define LASER_MASK              0b00001000   // 8
+#define LEFT_BLINKER_MASK       0b00010000   // 16
+#define EMERGENCY_BLINKER_MASK  0b00100000   // 32
+#define RIGHT_BLINKER_MASK      0b01000000   // 64
+#define LIMITER_MASK            0b10000000   // 128
+
+
 #define LED 26
 
 #define BLINK_PERIOD 2000
@@ -21,80 +34,63 @@ BluetoothSerial SerialBT;
 #define BURST_COUNT 3
 #define SHOT_PERIOD 1000
 
+BluetoothSerial SerialBT;
+
 typedef struct {
-  uint16_t initialization; //0xABCD
-  uint16_t x;
-  uint16_t y;
-  uint8_t single_shot;
-  uint8_t triple_shot;
-  uint8_t automatic_shot;
-  uint8_t laser;
-  uint8_t left_blinker;
-  uint8_t emergency_blinker;
-  uint8_t right_blinker;
+  int8_t x;
+  int8_t y;
+  uint8_t controls;
 } transmission_bt_t;
 
+union Transmission_buffer{
+  transmission_bt_t transmission;
+  uint8_t dataReceived[sizeof(transmission_bt_t)];
+};
+
 bool lastBT_status;
-transmission_bt_t last_transmission;
 unsigned long trigger_open;
 
 void setup() {
-  
-  Serial.begin(9600);
-  SerialBT.begin("EasyChair");
-  Serial.println("EasyChair started");
-  
-  pinMode(BT_STATUS_PIN, INPUT);
-
-  pinMode(BT_ENABLE_PIN, OUTPUT);
-  digitalWrite(BT_ENABLE_PIN, HIGH);
-  
-  pinMode(TRIGGER_PIN, OUTPUT);
-  digitalWrite(TRIGGER_PIN, LOW);
-  
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, !LOW);
-
-  memset (&last_transmission, 0, sizeof(transmission_bt_t));
-  trigger_open = millis();
-  lastBT_status = false;
-  
+  Serial.begin(115200);
+  SerialBT.begin("EasyChair"); //Bluetooth device name
+  Serial.println("The device started, now you can pair it with bluetooth!");
 }
 
+uint8_t syncro1, syncro2;
+Transmission_buffer last_transmission, temp_transmission;
 
 void loop() {
-
-  if (SerialBT.available() >= sizeof(transmission_bt_t)){
-    Serial.println("mensaje recibido");
-    transmission_bt_t temp;
-    for (byte i = 0; i < sizeof(transmission_bt_t); i++){
-      ((byte *)(&temp))[i] = SerialBT.read();
+  
+  if (SerialBT.available()) {
+    syncro2 = SerialBT.read();
+    if (syncro1 == 0xAB && syncro2 == 0xCD){
+      for (byte i = 0; i < sizeof(transmission_bt_t); i++){
+        while (!SerialBT.available());
+        last_transmission.dataReceived[i] = SerialBT.read();
+      }
+      Serial.println(
+      "BlinkL: " +          String((last_transmission.transmission.controls & LEFT_BLINKER_MASK) > 0) + " " +
+      "BlinkR: " +          String((last_transmission.transmission.controls & RIGHT_BLINKER_MASK) > 0) + " " +
+      "Danger: " +          String((last_transmission.transmission.controls & EMERGENCY_BLINKER_MASK) > 0) + " " +
+      "Laser: " +           String((last_transmission.transmission.controls & LASER_MASK) > 0) + " " +
+      "single_shot: " +     String((last_transmission.transmission.controls & SINGLE_SHOT_MASK) > 0) + " " +
+      "triple_shot: " +     String((last_transmission.transmission.controls & TRIPLE_SHOT_MASK) > 0) + " " +
+      "automatic_shot: " +  String((last_transmission.transmission.controls & AUTOMATIC_SHOT_MASK) > 0) + " " +
+      "limiter: " +         String((last_transmission.transmission.controls & LIMITER_MASK) > 0) + " " +
+      "x: " + (int)last_transmission.transmission.x + " " +
+      "y: " + (int)last_transmission.transmission.y + " " +
+      "status: " + String(last_transmission.transmission.controls)
+      );
     }
-    if (temp.initialization == 0xABCD){
-      last_transmission = temp;
-      if (last_transmission.single_shot && trigger_open < millis()){
-        trigger_open = millis() + SHOT_PERIOD;
-      }
-
-      if (last_transmission.single_shot && trigger_open < millis()){
-        trigger_open = millis() + (SHOT_PERIOD * BURST_COUNT);
-      }
-      
-      if (last_transmission.automatic_shot && trigger_open < millis()){
-        trigger_open = millis() + SHOT_PERIOD ;
-      }
+    else {
+      syncro1 = syncro2;
     }
-    char mensaje[50];
-    sprintf(mensaje, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", last_transmission.initialization, last_transmission.x, last_transmission.y, last_transmission.single_shot, last_transmission.triple_shot, last_transmission.automatic_shot, last_transmission.laser, last_transmission.left_blinker, last_transmission.emergency_blinker, last_transmission.right_blinker);
-    //Serial.println(last_transmission.right_blinker);
-    Serial.println(mensaje);
   }
   
   digitalWrite(TRIGGER_PIN, (trigger_open - millis()) > 0);
-  digitalWrite(LASER_PIN, last_transmission.laser);
-  digitalWrite(LEFT_BLINKER, !((last_transmission.left_blinker  |  last_transmission.emergency_blinker) && (millis() % BLINK_PERIOD > BLINK_PERIOD / 2)));
-  digitalWrite(RIGHT_BLINKER,!((last_transmission.right_blinker |  last_transmission.emergency_blinker) && (millis() % BLINK_PERIOD > BLINK_PERIOD / 2)));
+  digitalWrite(LASER_PIN, last_transmission.transmission.controls & LASER_MASK);
+  digitalWrite(LEFT_BLINKER, !(last_transmission.transmission.controls & ( LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK) && (millis() % BLINK_PERIOD > BLINK_PERIOD / 2)));
+  digitalWrite(RIGHT_BLINKER,!(last_transmission.transmission.controls & (RIGHT_BLINKER_MASK | EMERGENCY_BLINKER_MASK) && (millis() % BLINK_PERIOD > BLINK_PERIOD / 2)));
 
-  Serial.println(last_transmission.left_blinker);
-
+  delay(20);
 }
