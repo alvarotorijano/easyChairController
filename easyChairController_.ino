@@ -178,21 +178,13 @@ void loop() {
         while (!SerialBT.available());
         last_transmission.dataReceived[i] = SerialBT.read();
       }
-      /*
-      Serial.println(
-      "BlinkL: " +          String((last_transmission.transmission.controls & LEFT_BLINKER_MASK) > 0) + " " +
-      "BlinkR: " +          String((last_transmission.transmission.controls & RIGHT_BLINKER_MASK) > 0) + " " +
-      "Danger: " +          String((last_transmission.transmission.controls & EMERGENCY_BLINKER_MASK) > 0) + " " +
-      "Laser: " +           String((last_transmission.transmission.controls & LASER_MASK) > 0) + " " +
-      "single_shot: " +     String((last_transmission.transmission.controls & SINGLE_SHOT_MASK) > 0) + " " +
-      "triple_shot: " +     String((last_transmission.transmission.controls & TRIPLE_SHOT_MASK) > 0) + " " +
-      "automatic_shot: " +  String((last_transmission.transmission.controls & AUTOMATIC_SHOT_MASK) > 0) + " " +
-      "limiter: " +         String((last_transmission.transmission.controls & LIMITER_MASK) > 0) + " " +
-      "x: " + (int)last_transmission.transmission.x + " " +
-      "y: " + (int)last_transmission.transmission.y + " " +
-      "status: " + String(last_transmission.transmission.controls)
-      );
-      */
+      if ((last_transmission.transmission.controls & (SINGLE_SHOT_MASK | AUTOMATIC_SHOT_MASK)) && trigger_open < millis()){
+        trigger_open = millis() + SHOT_PERIOD;
+      }
+
+      if ((last_transmission.transmission.controls & TRIPLE_SHOT_MASK) && trigger_open < millis()){
+        trigger_open = millis() + (SHOT_PERIOD * BURST_COUNT);
+      }
     }
     else {
       syncro1 = syncro2;
@@ -200,7 +192,7 @@ void loop() {
   }
   hoverBoardSend(last_transmission.transmission.x * 10, sqrt(pow(last_transmission.transmission.x, 2) + pow(last_transmission.transmission.y, 2)) * 10);
   
-  digitalWrite(TRIGGER_PIN, !(trigger_open > millis()));
+  digitalWrite(TRIGGER_PIN, (trigger_open > millis()));
   digitalWrite(LASER_PIN, (bool)(last_transmission.transmission.controls & LASER_MASK));
   digitalWrite(LEFT_BLINKER, !(((last_transmission.transmission.controls &  (LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
   digitalWrite(RIGHT_BLINKER,!(((last_transmission.transmission.controls & (RIGHT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
