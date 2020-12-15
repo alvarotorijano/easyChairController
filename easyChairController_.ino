@@ -10,12 +10,10 @@
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 
-#define TRIGGER_PIN 2
-#define LASER_PIN 3
-#define BT_STATUS_PIN 4
-#define BT_ENABLE_PIN 5
-#define LEFT_BLINKER 6
-#define RIGHT_BLINKER 7
+#define TRIGGER_PIN 22
+#define LASER_PIN 23
+#define LEFT_BLINKER 21
+#define RIGHT_BLINKER 19
 
 #define SINGLE_SHOT_MASK        0b00000001   // 1
 #define TRIPLE_SHOT_MASK        0b00000010   // 2
@@ -27,9 +25,9 @@
 #define LIMITER_MASK            0b10000000   // 128
 
 
-#define LED 26
+#define LED 2
 
-#define BLINK_PERIOD 2000
+#define BLINK_PERIOD 1000
 
 #define BURST_COUNT 3
 #define SHOT_PERIOD 1000
@@ -160,6 +158,11 @@ void setup() {
   SerialBT.begin("EasyChair"); //Bluetooth device name
   Serial2.begin(HOVER_SERIAL_BAUD);
   Serial.println("The device started, now you can pair it with bluetooth!");
+
+  pinMode(TRIGGER_PIN, OUTPUT);
+  pinMode(LASER_PIN, OUTPUT);
+  pinMode(LEFT_BLINKER, OUTPUT);
+  pinMode(RIGHT_BLINKER, OUTPUT);
   
 }
 
@@ -190,18 +193,16 @@ void loop() {
       "status: " + String(last_transmission.transmission.controls)
       );
       */
-      digitalWrite(TRIGGER_PIN, (trigger_open - millis()) > 0);
-      digitalWrite(LASER_PIN, last_transmission.transmission.controls & LASER_MASK);
-      digitalWrite(LEFT_BLINKER, !(last_transmission.transmission.controls & ( LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK) && (millis() % BLINK_PERIOD > BLINK_PERIOD / 2)));
-      digitalWrite(RIGHT_BLINKER,!(last_transmission.transmission.controls & (RIGHT_BLINKER_MASK | EMERGENCY_BLINKER_MASK) && (millis() % BLINK_PERIOD > BLINK_PERIOD / 2)));
-
     }
     else {
       syncro1 = syncro2;
     }
   }
   hoverBoardSend(last_transmission.transmission.x * 10, sqrt(pow(last_transmission.transmission.x, 2) + pow(last_transmission.transmission.y, 2)) * 10);
-      
-
+  
+  digitalWrite(TRIGGER_PIN, !(trigger_open > millis()));
+  digitalWrite(LASER_PIN, (bool)(last_transmission.transmission.controls & LASER_MASK));
+  digitalWrite(LEFT_BLINKER, !(((last_transmission.transmission.controls &  (LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
+  digitalWrite(RIGHT_BLINKER,!(((last_transmission.transmission.controls & (RIGHT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
   delay(50);
 }
