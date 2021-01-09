@@ -24,13 +24,11 @@
 #define RIGHT_BLINKER_MASK      0b01000000   // 64
 #define LIMITER_MASK            0b10000000   // 128
 
-
 #define LED 2
-
 #define BLINK_PERIOD 1000
 
 #define BURST_COUNT 3
-#define SHOT_PERIOD 1000
+#define SHOT_PERIOD 110
 
 BluetoothSerial SerialBT;
 
@@ -89,7 +87,7 @@ void hoverBoardSend(int16_t uSteer, int16_t uSpeed)
 
   // Write to Serial
   Serial2.write((uint8_t *) &Command, sizeof(Command)); 
-  Serial.println("sending");
+  //Serial.println("sending");
 }
 
 // ########################## RECEIVE ##########################
@@ -153,12 +151,19 @@ void hoverBoardReceive()
 
 #define HOVER_SERIAL_BAUD   38400       // [-] Baud rate for Serial2 (used to communicate with the hoverboard)
 
+//#define DEBUG
+//#define DEGUG_RX_CONTROLS
+
 void setup() {
-  Serial.begin(115200);
+  
   SerialBT.begin("EasyChair"); //Bluetooth device name
   Serial2.begin(HOVER_SERIAL_BAUD);
+  
+  #ifdef DEBUG
+  Serial.begin(115200);
   Serial.println("The device started, now you can pair it with bluetooth!");
-
+  #endif
+  
   pinMode(TRIGGER_PIN, OUTPUT);
   pinMode(LASER_PIN, OUTPUT);
   pinMode(LEFT_BLINKER, OUTPUT);
@@ -173,11 +178,16 @@ void loop() {
   
   if (SerialBT.available()) {
     syncro2 = SerialBT.read();
+    #ifdef DEGUG_RX
+    Serial.print("Received: " + String(syncro2) + "\n");
+    #endif
     if (syncro1 == 0xAB && syncro2 == 0xCD){
+      //*/
       for (byte i = 0; i < sizeof(transmission_bt_t); i++){
         while (!SerialBT.available());
         last_transmission.dataReceived[i] = SerialBT.read();
       }
+      //*/
       if ((last_transmission.transmission.controls & (SINGLE_SHOT_MASK | AUTOMATIC_SHOT_MASK)) && trigger_open < millis()){
         trigger_open = millis() + SHOT_PERIOD;
       }
@@ -185,16 +195,27 @@ void loop() {
       if ((last_transmission.transmission.controls & TRIPLE_SHOT_MASK) && trigger_open < millis()){
         trigger_open = millis() + (SHOT_PERIOD * BURST_COUNT);
       }
+      #ifdef DEGUG_RX_CONTROLS
+      Serial.print("Received: " + String(last_transmission.transmission.controls) + "\n");
+      #endif
     }
     else {
       syncro1 = syncro2;
     }
   }
-  hoverBoardSend(last_transmission.transmission.x * 10, sqrt(pow(last_transmission.transmission.x, 2) + pow(last_transmission.transmission.y, 2)) * 10);
-  
+  if (last_transmission.transmission.y < 0){
+    hoverBoardSend(last_transmission.transmission.x * 10, -1 * (sqrt(pow(last_transmission.transmission.x, 2) + pow(last_transmission.transmission.y, 2)) * 10));
+  }
+  else {
+    hoverBoardSend(last_transmission.transmission.x * 10, sqrt(pow(last_transmission.transmission.x, 2) + pow(last_transmission.transmission.y, 2)) * 10);
+  }
   digitalWrite(TRIGGER_PIN, (trigger_open > millis()));
   digitalWrite(LASER_PIN, (bool)(last_transmission.transmission.controls & LASER_MASK));
   digitalWrite(LEFT_BLINKER, !(((last_transmission.transmission.controls &  (LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
   digitalWrite(RIGHT_BLINKER,!(((last_transmission.transmission.controls & (RIGHT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
   delay(50);
+
+  #ifdef DEBUG
+  Serial.println(!(((last_transmission.transmission.controls &  (LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
+  #endif 
 }
