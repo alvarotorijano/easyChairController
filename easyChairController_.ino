@@ -32,6 +32,9 @@
 
 BluetoothSerial SerialBT;
 
+#define MAX_SPEED           500
+#define MAX_STICK_ABS_VALUE 127
+#define MAX_STEERING_VALUE  2000
 #define START_FRAME         0xABCD       // [-] Start frme definition for reliable serial communication
 
 typedef struct {
@@ -153,6 +156,19 @@ void hoverBoardReceive()
 
 //#define DEBUG
 //#define DEGUG_RX_CONTROLS
+//#define DEBUG_STEERING
+
+uint8_t syncro1, syncro2;
+Transmission_buffer last_transmission, temp_transmission;
+
+int steering;
+int throttle;
+
+#define MAX_STICK_ABS_VALUE_CORRECTED (MAX_STICK_ABS_VALUE+1)
+
+int smothStick(int input){
+  return ((pow(input, 2) + input) / (float)MAX_STICK_ABS_VALUE_CORRECTED) * ((float)MAX_STEERING_VALUE / MAX_STICK_ABS_VALUE_CORRECTED);
+}
 
 void setup() {
   
@@ -170,10 +186,7 @@ void setup() {
   pinMode(RIGHT_BLINKER, OUTPUT);
   
 }
-
-uint8_t syncro1, syncro2;
-Transmission_buffer last_transmission, temp_transmission;
-
+  
 void loop() {
   
   if (SerialBT.available()) {
@@ -203,19 +216,28 @@ void loop() {
       syncro1 = syncro2;
     }
   }
-  if (last_transmission.transmission.y < 0){
-    hoverBoardSend(last_transmission.transmission.x * 10, -1 * (sqrt(pow(last_transmission.transmission.x, 2) + pow(last_transmission.transmission.y, 2)) * 10));
+  steering = smothStick(last_transmission.transmission.x);// last_transmission.transmission.x * (float)2000 / 128;
+  throttle = smothStick(last_transmission.transmission.y);
+
+  if(last_transmission.transmission.controls & LIMITER_MASK && throttle > MAX_SPEED){
+    throttle = MAX_SPEED;
   }
-  else {
-    hoverBoardSend(last_transmission.transmission.x * 10, sqrt(pow(last_transmission.transmission.x, 2) + pow(last_transmission.transmission.y, 2)) * 10);
+  if (last_transmission.transmission.y < 0) {
+    throttle = throttle * -1;
   }
+
+  #ifdef DEBUG_STEERING
+  Serial.println("X: " + String(last_transmission.transmission.x));
+  Serial.println("Y: " + String(last_transmission.transmission.y));
+  Serial.println("Steering: " + String(steering));
+  Serial.println("throttle: " + String(throttle));
+  #endif
+  
+  hoverBoardSend(steering, throttle);
+  
   digitalWrite(TRIGGER_PIN, (trigger_open > millis()));
   digitalWrite(LASER_PIN, (bool)(last_transmission.transmission.controls & LASER_MASK));
   digitalWrite(LEFT_BLINKER, !(((last_transmission.transmission.controls &  (LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
   digitalWrite(RIGHT_BLINKER,!(((last_transmission.transmission.controls & (RIGHT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
   delay(50);
-
-  #ifdef DEBUG
-  Serial.println(!(((last_transmission.transmission.controls &  (LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK)) > 0) && ((millis() % BLINK_PERIOD) > (BLINK_PERIOD / 2))));
-  #endif 
 }
