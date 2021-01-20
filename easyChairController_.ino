@@ -32,7 +32,18 @@
 
 BluetoothSerial SerialBT;
 
-#define NOISE_GATE_THRESHOLD  15
+///Control options
+#define NOISE_GATE
+// define CUADRATIC_SMOTHERING
+#define CUBIC_SMOTHERING
+
+#ifdef CUADRATIC_SMOTHERING
+  #ifdef CUBIC_SMOTHERING
+    #error TOO_MANY_SMOTHERING_FUNCTIONS_DEFINED
+  #endif
+#endif
+
+#define NOISE_GATE_THRESHOLD  10
 #define MAX_SPEED             500
 #define MAX_STICK_ABS_VALUE   127
 #define MAX_STEERING_VALUE    2000
@@ -176,7 +187,13 @@ int throttle;
 #define MAX_STICK_ABS_VALUE_CORRECTED (MAX_STICK_ABS_VALUE+1)
 
 int smothStick(int input){
+  #ifdef CUADRATIC_SMOTHERING
   return ((pow(input, 2) + input) / (float)MAX_STICK_ABS_VALUE_CORRECTED) * ((float)MAX_STEERING_VALUE / MAX_STICK_ABS_VALUE_CORRECTED);
+  #endif
+
+  #ifdef CUBIC_SMOTHERING
+  return ((pow(input, 3) + input) / (float)pow(MAX_STICK_ABS_VALUE, 2)) * ((float)MAX_STEERING_VALUE / MAX_STICK_ABS_VALUE);
+  #endif
 }
 
 int noiseGate(int input, int threshold){
@@ -240,11 +257,12 @@ void loop() {
   }
 
   #ifdef NOISE_GATE
-    steering = smothStick(last_transmission.transmission.x);// last_transmission.transmission.x * (float)2000 / 128;
-    throttle = smothStick(last_transmission.transmission.y);
-  #else
     steering = smothStick(noiseGate(last_transmission.transmission.x, NOISE_GATE_THRESHOLD));// last_transmission.transmission.x * (float)2000 / 128;
     throttle = smothStick(noiseGate(last_transmission.transmission.y, NOISE_GATE_THRESHOLD));
+  #else
+    steering = smothStick(last_transmission.transmission.x);// last_transmission.transmission.x * (float)2000 / 128;
+    throttle = smothStick(last_transmission.transmission.y);
+
   #endif
   
   if(last_transmission.transmission.controls & LIMITER_MASK && throttle > MAX_SPEED){
