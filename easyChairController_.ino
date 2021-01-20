@@ -32,10 +32,11 @@
 
 BluetoothSerial SerialBT;
 
-#define MAX_SPEED           500
-#define MAX_STICK_ABS_VALUE 127
-#define MAX_STEERING_VALUE  2000
-#define START_FRAME         0xABCD       // [-] Start frme definition for reliable serial communication
+#define NOISE_GATE_THRESHOLD  15
+#define MAX_SPEED             500
+#define MAX_STICK_ABS_VALUE   127
+#define MAX_STEERING_VALUE    2000
+#define START_FRAME           0xABCD       // [-] Start frme definition for reliable serial communication
 
 typedef struct {
   int8_t x;
@@ -154,9 +155,17 @@ void hoverBoardReceive()
 
 #define HOVER_SERIAL_BAUD   38400       // [-] Baud rate for Serial2 (used to communicate with the hoverboard)
 
-//#define DEBUG
+
 //#define DEGUG_RX_CONTROLS
-//#define DEBUG_STEERING
+#define DEBUG_STEERING
+
+#ifdef DEBUG_STEERING
+#define DEBUG
+#endif
+
+#ifdef DEGUG_RX_CONTROLS
+#define DEBUG
+#endif
 
 uint8_t syncro1, syncro2;
 Transmission_buffer last_transmission, temp_transmission;
@@ -168,6 +177,19 @@ int throttle;
 
 int smothStick(int input){
   return ((pow(input, 2) + input) / (float)MAX_STICK_ABS_VALUE_CORRECTED) * ((float)MAX_STEERING_VALUE / MAX_STICK_ABS_VALUE_CORRECTED);
+}
+
+int noiseGate(int input, int threshold){
+  if (abs(input) < threshold){
+    return 0;
+  }
+  else {
+    if (input < 0){
+      return round((input + threshold)*(((float)MAX_STICK_ABS_VALUE_CORRECTED + threshold + 1) / (float)MAX_STICK_ABS_VALUE));
+    } else {
+      return round((input - threshold)*(((float)MAX_STICK_ABS_VALUE_CORRECTED + threshold + 1) / (float)MAX_STICK_ABS_VALUE));
+    }
+  }
 }
 
 void setup() {
@@ -216,9 +238,15 @@ void loop() {
       syncro1 = syncro2;
     }
   }
-  steering = smothStick(last_transmission.transmission.x);// last_transmission.transmission.x * (float)2000 / 128;
-  throttle = smothStick(last_transmission.transmission.y);
 
+  #ifdef NOISE_GATE
+    steering = smothStick(last_transmission.transmission.x);// last_transmission.transmission.x * (float)2000 / 128;
+    throttle = smothStick(last_transmission.transmission.y);
+  #else
+    steering = smothStick(noiseGate(last_transmission.transmission.x, NOISE_GATE_THRESHOLD));// last_transmission.transmission.x * (float)2000 / 128;
+    throttle = smothStick(noiseGate(last_transmission.transmission.y, NOISE_GATE_THRESHOLD));
+  #endif
+  
   if(last_transmission.transmission.controls & LIMITER_MASK && throttle > MAX_SPEED){
     throttle = MAX_SPEED;
   }
