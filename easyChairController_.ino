@@ -192,7 +192,7 @@ int smothStick(int input){
   #endif
 
   #ifdef CUBIC_SMOTHERING
-  return ((pow(input, 3) + input) / (float)pow(MAX_STICK_ABS_VALUE, 2)) * ((float)MAX_STEERING_VALUE / MAX_STICK_ABS_VALUE);
+  return abs((pow(input, 3) + input) / (float)pow(MAX_STICK_ABS_VALUE, 2)) * ((float)MAX_STEERING_VALUE / MAX_STICK_ABS_VALUE);
   #endif
 }
 
