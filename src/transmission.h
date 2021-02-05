@@ -15,6 +15,6 @@ union Transmission_buffer{
 };
 
 // This must be global because of the PS3 callback
-Transmission_buffer last_transmission;
+extern Transmission_buffer last_transmission;
 
 #endif

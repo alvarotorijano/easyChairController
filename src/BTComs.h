@@ -9,7 +9,7 @@
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 
-BluetoothSerial SerialBT;
+extern BluetoothSerial SerialBT;
 
 Transmission_buffer BTReceive();
 void initBT();

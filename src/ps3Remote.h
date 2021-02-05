@@ -13,6 +13,6 @@ void updateBattery();
 void onConnect();
 void initPS3Remote();
 
-int battery = 0;
+extern int battery;
 
 #endif

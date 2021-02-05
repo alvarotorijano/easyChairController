@@ -14,7 +14,7 @@ typedef struct{
    int16_t  speed;
    uint16_t checksum;
 } SerialCommand;
-SerialCommand Command;
+extern SerialCommand Command;
 
 typedef struct{
    uint16_t start;
@@ -27,17 +27,21 @@ typedef struct{
    uint16_t cmdLed;
    uint16_t checksum;
 } SerialFeedback;
-SerialFeedback Feedback;
-SerialFeedback NewFeedback;
+extern SerialFeedback Feedback;
+extern SerialFeedback NewFeedback;
 
 void hoverBoardReceive();
 void hoverBoardSend(int16_t uSteer, int16_t uSpeed);
 
+// NO DEFINAS VARIABLES EN UN FICHERO .H, DECLARALAS SOLO
+
+// Aqui solo defines, en el hoverBoardCom.cpp ya le das valor a la variable   
+
 // Global variables
-uint8_t idx = 0;                        // Index for new data pointer
-uint16_t bufStartFrame;                 // Buffer Start Frame
-byte *p;                                // Pointer declaration for the new received data
-byte incomingByte;
-byte incomingBytePrev;
+extern uint8_t idx;                        // Index for new data pointer  // ESTO PUEDE SER PROBLEMATICO
+extern uint16_t bufStartFrame;                 // Buffer Start Frame
+extern byte *p;                                // Pointer declaration for the new received data
+extern byte incomingByte;
+extern byte incomingBytePrev;
 
 #endif

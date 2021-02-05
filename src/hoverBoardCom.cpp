@@ -1,5 +1,14 @@
 #include "hoverBoardCom.h"
 
+SerialFeedback Feedback;
+SerialFeedback NewFeedback;
+SerialCommand Command;
+
+uint16_t bufStartFrame;                 // Buffer Start Frame
+byte *p;                                // Pointer declaration for the new received data
+byte incomingByte;
+byte incomingBytePrev;
+
 void hoverBoardReceive()
 {
   // Check for new data availability in the Serial buffer

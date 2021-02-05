@@ -1,5 +1,7 @@
 #include "BTComs.h"
 
+BluetoothSerial SerialBT;
+
 Transmission_buffer BTReceive(){
     static Transmission_buffer transmission = {};
     static uint8_t syncro1, syncro2;

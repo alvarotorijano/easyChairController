@@ -1,5 +1,7 @@
 #include "ps3Remote.h"
 
+int battery = 0;
+
 void notify()
 {
     //--------------- Digital D-pad button events --------------

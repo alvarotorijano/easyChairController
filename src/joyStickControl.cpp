@@ -1,5 +1,7 @@
 #include "joyStickControl.h"
 
+uint8_t idx = 0;
+
 int smothStick(int input){
   #ifdef CUADRATIC_SMOTHERING
   return ((pow(input, 2) + input) / (float)MAX_STICK_ABS_VALUE_CORRECTED) * ((float)MAX_STEERING_VALUE / MAX_STICK_ABS_VALUE_CORRECTED);
