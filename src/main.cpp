@@ -47,7 +47,7 @@ void loop() {
 
 
   if (initialBTSwitch != digitalRead(BT_PS3_PIN)){
-    delay(1000);
+    delay(RESET_DELAY);
     ESP.restart();
   }
   
@@ -84,15 +84,7 @@ void loop() {
     if (last_transmission.transmission.y < 0) {
       throttle = throttle * -1;
     }
-    /*/
-    Serial.println("LeftBlinker: " + String((bool)(last_transmission.transmission.controls & LEFT_BLINKER_MASK)));
-    Serial.println("RightBlinker: " + String((bool)(last_transmission.transmission.controls & RIGHT_BLINKER_MASK)));
-    Serial.println("Laser: " + String((bool)(last_transmission.transmission.controls & LASER_MASK)));
-    Serial.println("Shot: " + String((bool)(last_transmission.transmission.controls & AUTOMATIC_SHOT_MASK)));
-    Serial.println("steering: " + String (steering));
-    Serial.println("throttle: " + String (throttle));
-    //*/
-    Serial.println("Control: " + String(last_transmission.transmission.controls));
+
     hoverBoardSend(steering, throttle);
     delay(LOOP_DELAY);
 

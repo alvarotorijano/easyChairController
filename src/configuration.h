@@ -14,7 +14,7 @@
 #define LOOP_DELAY            NORMAL_LOOP_DELAY
 #endif
 
-#define RESET_DELAUY          1000
+#define RESET_DELAY           2000
 
 #define USB_BAUDRATE          9600
 
