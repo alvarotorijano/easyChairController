@@ -7,36 +7,34 @@ void notify()
     //--------------- Digital D-pad button events --------------
 
     if( Ps3.event.button_down.right ){
-        last_transmission.transmission.controls &= !(LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK);
+        last_transmission.transmission.controls &= ~(LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK);
         last_transmission.transmission.controls ^= RIGHT_BLINKER_MASK;
     }
         
-
     if( Ps3.event.button_down.left ){
-        last_transmission.transmission.controls &= !(RIGHT_BLINKER_MASK | EMERGENCY_BLINKER_MASK);
+        last_transmission.transmission.controls &= ~(RIGHT_BLINKER_MASK | EMERGENCY_BLINKER_MASK);
         last_transmission.transmission.controls ^= LEFT_BLINKER_MASK;
     }
 
     if( Ps3.event.button_down.l1 ){
-        last_transmission.transmission.controls &= LASER_MASK;
+        last_transmission.transmission.controls |= LASER_MASK;
     }
-        
     if( Ps3.event.button_up.l1 ){
         last_transmission.transmission.controls &= !LASER_MASK;
     }
 
     if( Ps3.event.button_down.r1 )
-        last_transmission.transmission.controls &= AUTOMATIC_SHOT_MASK;
+        last_transmission.transmission.controls |= AUTOMATIC_SHOT_MASK;
     if( Ps3.event.button_up.r1 )
         last_transmission.transmission.controls &= !AUTOMATIC_SHOT_MASK;
 
     //---------- Digital select/start/ps button events ---------
     if( Ps3.event.button_down.select ){
-        last_transmission.transmission.controls &= !(RIGHT_BLINKER_MASK | LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK);
+        last_transmission.transmission.controls &= ~(RIGHT_BLINKER_MASK | LEFT_BLINKER_MASK | EMERGENCY_BLINKER_MASK);
     }
 
     if( Ps3.event.button_down.start ){
-        last_transmission.transmission.controls &= !(RIGHT_BLINKER_MASK | LEFT_BLINKER_MASK );
+        last_transmission.transmission.controls &= ~(RIGHT_BLINKER_MASK | LEFT_BLINKER_MASK );
         last_transmission.transmission.controls ^= EMERGENCY_BLINKER_MASK;
     }
 

@@ -23,14 +23,29 @@ void setup() {
     initialBTSwitch = PS3;
     digitalWrite(LED, HIGH);
   }
+
+  #ifdef DEBUG
+  Serial.begin(USB_BAUDRATE);
+  if (initialBTSwitch == BT){
+    Serial.println("Bluetooth mode");
+  }
+  else {
+    Serial.println("PS3 controller mode");
+  }
+  #endif
   
   Serial2.begin(HOVER_SERIAL_BAUD);
+
+  delay(SETUP_DELAY);
+
 }
 
 void loop() {
   static int steering;
   static int throttle;
   static Transmission_buffer temp_transmission;
+
+
   if (initialBTSwitch != digitalRead(BT_PS3_PIN)){
     delay(1000);
     ESP.restart();
@@ -45,11 +60,13 @@ void loop() {
   }
   else {
     if(!Ps3.isConnected()){
+      digitalWrite(LED, LOW);
       return;
     }
+    digitalWrite(LED, HIGH);
     updateBattery();
   }
-
+  
   triggerGun(last_transmission.transmission.controls);
   triggerBlinker(last_transmission.transmission.controls);
 
@@ -67,8 +84,16 @@ void loop() {
     if (last_transmission.transmission.y < 0) {
       throttle = throttle * -1;
     }
-    
+    /*/
+    Serial.println("LeftBlinker: " + String((bool)(last_transmission.transmission.controls & LEFT_BLINKER_MASK)));
+    Serial.println("RightBlinker: " + String((bool)(last_transmission.transmission.controls & RIGHT_BLINKER_MASK)));
+    Serial.println("Laser: " + String((bool)(last_transmission.transmission.controls & LASER_MASK)));
+    Serial.println("Shot: " + String((bool)(last_transmission.transmission.controls & AUTOMATIC_SHOT_MASK)));
+    Serial.println("steering: " + String (steering));
+    Serial.println("throttle: " + String (throttle));
+    //*/
+    Serial.println("Control: " + String(last_transmission.transmission.controls));
     hoverBoardSend(steering, throttle);
-    delay(50);
+    delay(LOOP_DELAY);
 
 }
