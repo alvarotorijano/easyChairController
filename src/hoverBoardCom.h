@@ -32,15 +32,12 @@ extern SerialFeedback NewFeedback;
 
 void hoverBoardReceive();
 void hoverBoardSend(int16_t uSteer, int16_t uSpeed);
-
-// NO DEFINAS VARIABLES EN UN FICHERO .H, DECLARALAS SOLO
-
-// Aqui solo defines, en el hoverBoardCom.cpp ya le das valor a la variable   
+void initHover(); 
 
 // Global variables
-extern uint8_t idx;                        // Index for new data pointer  // ESTO PUEDE SER PROBLEMATICO
-extern uint16_t bufStartFrame;                 // Buffer Start Frame
-extern byte *p;                                // Pointer declaration for the new received data
+extern uint8_t idx;                      // Index for new data pointer
+extern uint16_t bufStartFrame;           // Buffer Start Frame
+extern byte *p;                          // Pointer declaration for the new received data
 extern byte incomingByte;
 extern byte incomingBytePrev;
 

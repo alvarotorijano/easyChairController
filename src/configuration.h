@@ -30,6 +30,9 @@
 
 #define PS3_MAC_ADDRESS       "00:19:C1:C0:C7:86"
 
+#define MAX_BATTERY_VALUE 390
+#define MIN_BATTERY_VALUE 337
+
 ///Control options
 #define NOISE_GATE
 // define CUADRATIC_SMOTHERING
@@ -56,5 +59,8 @@
 #define EMERGENCY_BLINKER_MASK  0b00100000   // 32
 #define RIGHT_BLINKER_MASK      0b01000000   // 64
 #define LIMITER_MASK            0b10000000   // 128
+
+#define PS3 1
+#define BT  0
 
 #endif

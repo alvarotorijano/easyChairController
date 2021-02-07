@@ -7,6 +7,7 @@
 #include "triggerManager.h"
 #include "BTComs.h"
 #include "blinkerManager.h"
+#include "ledIndicator.h"
 
 bool initialBTSwitch;
 
@@ -34,7 +35,13 @@ void setup() {
   }
   #endif
   
-  Serial2.begin(HOVER_SERIAL_BAUD);
+  initHover();
+  
+  ledAnimation2();
+  ledAnimation3();
+  ledAnimation2();
+  ledAnimation3();
+  ledAnimation1();
 
   delay(SETUP_DELAY);
 
@@ -84,8 +91,9 @@ void loop() {
     if (last_transmission.transmission.y < 0) {
       throttle = throttle * -1;
     }
-
+    hoverBoardReceive();
     hoverBoardSend(steering, throttle);
+    displayBattery(Feedback.batVoltage);
     delay(LOOP_DELAY);
 
 }

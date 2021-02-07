@@ -79,3 +79,8 @@ void hoverBoardSend(int16_t uSteer, int16_t uSpeed)
   Serial2.write((uint8_t *) &Command, sizeof(Command)); 
   //Serial.println("sending");
 }
+
+void initHover(){
+  Serial2.begin(HOVER_SERIAL_BAUD);
+}
+
