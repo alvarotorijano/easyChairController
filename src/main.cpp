@@ -77,7 +77,7 @@ void loop() {
   triggerGun(last_transmission.transmission.controls);
   triggerBlinker(last_transmission.transmission.controls);
 
-      #ifdef NOISE_GATE
+    #ifdef NOISE_GATE
       steering = smothStick(noiseGate(last_transmission.transmission.x, NOISE_GATE_THRESHOLD));// last_transmission.transmission.x * (float)2000 / 128;
       throttle = smothStick(noiseGate(last_transmission.transmission.y, NOISE_GATE_THRESHOLD));
     #else
@@ -91,8 +91,18 @@ void loop() {
     if (last_transmission.transmission.y < 0) {
       throttle = throttle * -1;
     }
-    hoverBoardReceive();
-    hoverBoardSend(steering, throttle);
+    if (last_transmission.transmission.x < 0) {
+      steering = steering * -1;
+    }
+    #ifndef DEBUG
+      hoverBoardReceive();
+      hoverBoardSend(steering, throttle);
+    
+    #else
+      Serial.println("steering: " + String (steering));
+      Serial.println("throttle: " + String (throttle));
+    #endif
+    
     displayBattery(Feedback.batVoltage);
     delay(LOOP_DELAY);
 

@@ -1,7 +1,7 @@
 #ifndef CONFIGURATION_H__
 #define CONFIGURATION_H__
 
-#define DEBUG_LOOP_DELAY      500
+#define DEBUG_LOOP_DELAY      50
 #define NORMAL_LOOP_DELAY     50
 
 //#define DEBUG
@@ -35,7 +35,7 @@
 
 ///Control options
 #define NOISE_GATE
-// define CUADRATIC_SMOTHERING
+// #define CUADRATIC_SMOTHERING
 #define CUBIC_SMOTHERING
 
 #ifdef CUADRATIC_SMOTHERING
