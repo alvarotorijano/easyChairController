@@ -30,6 +30,10 @@
 
 #define PS3_MAC_ADDRESS       "00:19:C1:C0:C7:86"
 
+#define INVERT_PS3_Y_AXIS
+//#define INVERT_PS3_X_AXIS
+
+
 #define MAX_BATTERY_VALUE 390
 #define MIN_BATTERY_VALUE 337
 

@@ -42,8 +42,18 @@ void notify()
         last_transmission.transmission.controls ^= LIMITER_MASK;
 
    if( abs(Ps3.event.analog_changed.stick.rx) + abs(Ps3.event.analog_changed.stick.ry) > 2 ){
-       last_transmission.transmission.x = Ps3.data.analog.stick.rx;
-       last_transmission.transmission.y = Ps3.data.analog.stick.ry;
+
+      #ifdef INVERT_PS3_X_AXIS
+        last_transmission.transmission.x = Ps3.data.analog.stick.rx; * -1;
+       #else
+        last_transmission.transmission.x = Ps3.data.analog.stick.rx;
+       #endif
+       
+       #ifdef INVERT_PS3_Y_AXIS
+        last_transmission.transmission.y = Ps3.data.analog.stick.ry * -1;
+       #else
+        last_transmission.transmission.y = Ps3.data.analog.stick.ry;
+       #endif
    }
 }
 
