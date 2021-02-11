@@ -11,6 +11,8 @@
 
 bool initialBTSwitch;
 
+
+
 void setup() {
 
   initGPIO();
@@ -77,33 +79,37 @@ void loop() {
   triggerGun(last_transmission.transmission.controls);
   triggerBlinker(last_transmission.transmission.controls);
 
-    #ifdef NOISE_GATE
-      steering = smothStick(noiseGate(last_transmission.transmission.x, NOISE_GATE_THRESHOLD));// last_transmission.transmission.x * (float)2000 / 128;
-      throttle = smothStick(noiseGate(last_transmission.transmission.y, NOISE_GATE_THRESHOLD));
-    #else
-      steering = smothStick(last_transmission.transmission.x);// last_transmission.transmission.x * (float)2000 / 128;
-      throttle = smothStick(last_transmission.transmission.y);
-    #endif
-    
-    if(last_transmission.transmission.controls & LIMITER_MASK && throttle > MAX_SPEED){
-      throttle = MAX_SPEED;
-    }
-    if (last_transmission.transmission.y < 0) {
-      throttle = throttle * -1;
-    }
-    if (last_transmission.transmission.x < 0) {
-      steering = steering * -1;
-    }
-    #ifndef DEBUG
-      hoverBoardReceive();
-      hoverBoardSend(steering, throttle);
-    
-    #else
-      Serial.println("steering: " + String (steering));
-      Serial.println("throttle: " + String (throttle));
-    #endif
-    
-    displayBattery(Feedback.batVoltage);
-    delay(LOOP_DELAY);
+  if(last_transmission.transmission.controls & LIMITER_MASK){
+    setMaxSpeed(LIMITED_SPEED);
+  }
+  else {
+    setMaxSpeed(MAX_SPEED);
+  }
+
+  #ifdef NOISE_GATE
+    steering = smothStick(noiseGate(last_transmission.transmission.x, NOISE_GATE_THRESHOLD), MAX_STEERING_VALUE);// last_transmission.transmission.x * (float)2000 / 128;
+    throttle = smothStick(noiseGate(last_transmission.transmission.y, NOISE_GATE_THRESHOLD), speed_limit);
+  #else
+    steering = smothStick(last_transmission.transmission.x, MAX_STEERING_VALUE);// last_transmission.transmission.x * (float)2000 / 128;
+    throttle = smothStick(last_transmission.transmission.y, speed_limit);
+  #endif
+
+  if (last_transmission.transmission.y < 0) {
+    throttle = throttle * -1;
+  }
+  if (last_transmission.transmission.x < 0) {
+    steering = steering * -1;
+  }
+
+  #ifndef DEBUG
+    hoverBoardReceive();
+    hoverBoardSend(steering, throttle);
+  #else
+    Serial.println("steering: " + String (steering));
+    Serial.println("throttle: " + String (throttle));
+  #endif
+  
+  displayBattery(Feedback.batVoltage);
+  delay(LOOP_DELAY);
 
 }

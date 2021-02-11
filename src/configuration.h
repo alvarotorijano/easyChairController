@@ -24,7 +24,8 @@
 #define SHOT_PERIOD           110
 #define TRIGGER_DELAY         500
 
-#define MAX_SPEED             500
+#define LIMITED_SPEED         200
+#define MAX_SPEED             2000
 
 #define DEVICE_NAME           "EasyChair"
 
