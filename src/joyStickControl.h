@@ -10,7 +10,10 @@
 #define MAX_STICK_ABS_VALUE   127
 #define MAX_STICK_ABS_VALUE_CORRECTED (MAX_STICK_ABS_VALUE+1)
 
-int smothStick(int input);
+extern int speed_limit;
+
+void setMaxSpeed(int speed);
+int smothStick(int input, int maxValue);
 int noiseGate(int input, int threshold);
 
 #endif
